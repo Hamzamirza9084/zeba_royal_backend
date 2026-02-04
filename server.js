@@ -16,7 +16,11 @@ const app = express();
 // --- Extra Goodies ---
 app.use(helmet()); // Security Headers
 app.use(morgan('dev')); // Logging
-app.use(cors()); // Allow frontend to communicate
+app.use(cors({
+    origin: 'https://thriving-kashata-36c146.netlify.app',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: false }));
 
