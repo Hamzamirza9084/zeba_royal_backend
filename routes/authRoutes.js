@@ -6,7 +6,8 @@ const {
   registerUser, 
   loginUser, 
   getMe, 
-  updateProfileFromPdf 
+  updateProfileFromPdf,
+  updateUserProfile
 } = require('../controllers/authController');
 
 // Configure Multer for temporary file storage
@@ -16,7 +17,7 @@ const upload = multer({ dest: 'uploads/' });
 router.post('/', registerUser);
 router.post('/login', loginUser);
 router.get('/me', protect, getMe);
-
+router.put('/profile', protect, updateUserProfile);
 // New Route: Update Profile via PDF Upload
 // 'profilePdf' must match the key used in the frontend FormData
 router.put('/profile/upload-pdf', protect, upload.single('profilePdf'), updateProfileFromPdf);

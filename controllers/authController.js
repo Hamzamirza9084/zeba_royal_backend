@@ -5,9 +5,7 @@ const fs = require('fs');
 const pdf = require('pdf-parse');
 
 // Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-};
+const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
 // @desc    Register new user
 // @route   POST /api/users
@@ -76,9 +74,7 @@ const loginUser = async (req, res) => {
 // @desc    Get user data
 // @route   GET /api/users/me
 // @access  Private
-const getMe = async (req, res) => {
-  res.status(200).json(req.user);
-};
+
 
 // @desc    Update user profile from uploaded PDF (ApplyBoard/Passport)
 // @route   PUT /api/users/profile/upload-pdf
@@ -152,9 +148,59 @@ const updateProfileFromPdf = async (req, res) => {
   }
 };
 
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      // Direct overwrite of profile sections from request body
+      user.personalInfo = req.body.personalInfo || user.personalInfo;
+      user.addressDetails = req.body.addressDetails || user.addressDetails;
+      user.backgroundInfo = req.body.backgroundInfo || user.backgroundInfo;
+      user.educationDetails = req.body.educationDetails || user.educationDetails;
+      user.schoolHistory = req.body.schoolHistory || user.schoolHistory;
+      user.testScores = req.body.testScores || user.testScores;
+      user.additionalDetails = req.body.additionalDetails || user.additionalDetails;
+
+      // Update base fields if present
+      if (req.body.name) user.name = req.body.name;
+      if (req.body.email) user.email = req.body.email;
+      
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        personalInfo: updatedUser.personalInfo,
+        // ... return other fields as needed for the frontend response
+        message: "Profile updated successfully"
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error updating profile' });
+  }
+};
+
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
+  updateUserProfile, // Export this
   updateProfileFromPdf,
 };
