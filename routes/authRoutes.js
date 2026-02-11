@@ -16,6 +16,7 @@ const upload = multer({ dest: 'uploads/' });
 // Existing Authentication Routes
 router.post('/', registerUser);
 router.post('/login', loginUser);
+router.post('/register', registerUser);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateUserProfile);
 // New Route: Update Profile via PDF Upload

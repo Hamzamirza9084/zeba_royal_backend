@@ -7,6 +7,16 @@ const pdf = require('pdf-parse');
 // Generate JWT
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
+// Helper function to convert string booleans to actual booleans
+const toBoolean = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'string') {
+    return value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+  }
+  return Boolean(value);
+};
+
 // @desc    Register new user
 // @route   POST /api/users
 // @access  Public
@@ -156,27 +166,100 @@ const updateUserProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-      // Direct overwrite of profile sections from request body
-      user.personalInfo = req.body.personalInfo || user.personalInfo;
-      user.addressDetails = req.body.addressDetails || user.addressDetails;
-      user.backgroundInfo = req.body.backgroundInfo || user.backgroundInfo;
-      user.educationDetails = req.body.educationDetails || user.educationDetails;
-      user.schoolHistory = req.body.schoolHistory || user.schoolHistory;
-      user.testScores = req.body.testScores || user.testScores;
-      user.additionalDetails = req.body.additionalDetails || user.additionalDetails;
+      const body = req.body;
 
-      // Update base fields if present
-      if (req.body.name) user.name = req.body.name;
-      if (req.body.email) user.email = req.body.email;
-      
+      // Map personalInfo to schema fields
+      if (body.personalInfo) {
+        user.firstName = body.personalInfo.firstName || user.firstName;
+        user.middleName = body.personalInfo.middleName || user.middleName;
+        user.lastName = body.personalInfo.lastName || user.lastName;
+        user.dob = body.personalInfo.dateOfBirth || user.dob;
+        user.firstLanguage = body.personalInfo.firstLanguage || user.firstLanguage;
+        user.citizenship = body.personalInfo.countryOfCitizenship || user.citizenship;
+        user.passportNumber = body.personalInfo.passportNumber || user.passportNumber;
+        user.passportExpiry = body.personalInfo.passportExpiryDate || user.passportExpiry;
+        user.passportPlaceOfBirth = body.personalInfo.passportPlaceOfBirth || user.passportPlaceOfBirth;
+        user.gender = body.personalInfo.gender || user.gender;
+        user.maritalStatus = body.personalInfo.maritalStatus || user.maritalStatus;
+        user.phone = body.personalInfo.phoneNumber || user.phone;
+        user.studentEmail = body.personalInfo.studentEmail || user.studentEmail;
+      }
+
+      // Map addressDetails to address schema
+      if (body.addressDetails) {
+        user.address = {
+          street: body.addressDetails.street || user.address?.street,
+          city: body.addressDetails.city || user.address?.city,
+          country: body.addressDetails.country || user.address?.country,
+          province: body.addressDetails.province || user.address?.province,
+          zipCode: body.addressDetails.postalCode || user.address?.zipCode
+        };
+      }
+
+      // Map backgroundInfo
+      if (body.backgroundInfo) {
+        user.background = {
+          visaRefusal: toBoolean(body.backgroundInfo.refusedVisa),
+          hasValidPermit: toBoolean(body.backgroundInfo.validStudyPermit),
+          permitDetails: body.backgroundInfo.details || user.background?.permitDetails
+        };
+      }
+
+      // Map educationDetails
+      if (body.educationDetails) {
+        user.highestEducation = {
+          country: body.educationDetails.countryOfEducation || user.highestEducation?.country,
+          level: body.educationDetails.highestLevel || user.highestEducation?.level,
+          gradingScheme: body.educationDetails.gradingScheme || user.highestEducation?.gradingScheme,
+          gradeAverage: body.educationDetails.gradeAverage || user.highestEducation?.gradeAverage,
+          graduated: toBoolean(body.educationDetails.graduatedMostRecent)
+        };
+      }
+
+      // Map schoolHistory
+      if (body.schoolHistory) {
+        user.schoolHistory = body.schoolHistory.map(school => ({
+          country: school.countryOfInstitution,
+          name: school.schoolName,
+          level: school.educationLevel,
+          gradingScheme: school.gradingScheme,
+          language: school.primaryLanguage,
+          from: school.attendedFrom,
+          to: school.attendedTo,
+          degree: school.degreeName,
+          graduated: toBoolean(school.graduated),
+          graduationDate: school.graduationDate,
+          certificateAvailable: toBoolean(school.physicalCertificateAvailable),
+          address: school.schoolAddress
+        }));
+      }
+
+      // Map testScores
+      if (body.testScores) {
+        user.testScores = {
+          proofAvailable: toBoolean(body.testScores.proofOfLanguageProficiency),
+          conditionalAdmission: toBoolean(body.testScores.applyConditionalAdmission),
+          languageStatus: body.testScores.languageTestStatus,
+          greScore: body.testScores.greScores,
+          gmatScore: body.testScores.gmatScores,
+          openToLanguageCourse: toBoolean(body.testScores.openToProficiencyCourse)
+        };
+      }
+
+      // Map additionalDetails
+      if (body.additionalDetails) {
+        user.additionalDetails = {
+          emergencyContacts: body.additionalDetails.emergencyContact,
+          notes: body.additionalDetails.additionalNotes
+        };
+      }
+
       const updatedUser = await user.save();
 
       res.json({
         _id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
-        personalInfo: updatedUser.personalInfo,
-        // ... return other fields as needed for the frontend response
         message: "Profile updated successfully"
       });
     } else {
@@ -191,8 +274,82 @@ const updateUserProfile = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
-    res.status(200).json(user);
+    
+    // Helper to convert boolean to Yes/No string
+    const boolToYesNo = (value) => {
+      return value === true ? 'Yes' : value === false ? 'No' : '';
+    };
+    
+    // Transform schema to frontend structure
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      personalInfo: {
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        dateOfBirth: user.dob,
+        firstLanguage: user.firstLanguage,
+        countryOfCitizenship: user.citizenship,
+        passportNumber: user.passportNumber,
+        passportExpiryDate: user.passportExpiry,
+        passportPlaceOfBirth: user.passportPlaceOfBirth,
+        gender: user.gender,
+        maritalStatus: user.maritalStatus,
+        phoneNumber: user.phone,
+        studentEmail: user.studentEmail
+      },
+      addressDetails: {
+        street: user.address?.street,
+        city: user.address?.city,
+        country: user.address?.country,
+        province: user.address?.province,
+        postalCode: user.address?.zipCode
+      },
+      backgroundInfo: {
+        refusedVisa: boolToYesNo(user.background?.visaRefusal),
+        validStudyPermit: boolToYesNo(user.background?.hasValidPermit),
+        details: user.background?.permitDetails
+      },
+      educationDetails: {
+        countryOfEducation: user.highestEducation?.country,
+        highestLevel: user.highestEducation?.level,
+        gradingScheme: user.highestEducation?.gradingScheme,
+        gradeAverage: user.highestEducation?.gradeAverage,
+        graduatedMostRecent: boolToYesNo(user.highestEducation?.graduated)
+      },
+      schoolHistory: (user.schoolHistory || []).map(school => ({
+        countryOfInstitution: school.country,
+        schoolName: school.name,
+        educationLevel: school.level,
+        gradingScheme: school.gradingScheme,
+        primaryLanguage: school.language,
+        attendedFrom: school.from,
+        attendedTo: school.to,
+        degreeName: school.degree,
+        graduated: boolToYesNo(school.graduated),
+        graduationDate: school.graduationDate,
+        physicalCertificateAvailable: boolToYesNo(school.certificateAvailable),
+        schoolAddress: school.address
+      })),
+      testScores: {
+        proofOfLanguageProficiency: boolToYesNo(user.testScores?.proofAvailable),
+        applyConditionalAdmission: user.testScores?.conditionalAdmission,
+        languageTestStatus: user.testScores?.languageStatus,
+        greScores: user.testScores?.greScore,
+        gmatScores: user.testScores?.gmatScore,
+        openToProficiencyCourse: boolToYesNo(user.testScores?.openToLanguageCourse)
+      },
+      additionalDetails: {
+        emergencyContact: user.additionalDetails?.emergencyContacts,
+        additionalNotes: user.additionalDetails?.notes
+      }
+    };
+    
+    res.status(200).json(userData);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

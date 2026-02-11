@@ -29,6 +29,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/authRoutes'))
 app.use('/api/universities', require('./routes/uniRoutes'));
 
 // Error Handler (Must be last)
