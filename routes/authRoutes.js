@@ -1,13 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser } = require('../controllers/authController');
-const { errorHandler } = require('../middleware/errorMiddleware');
+const multer = require('multer');
+const { protect } = require('../middleware/authMiddleware');
+const { 
+  registerUser, 
+  loginUser, 
+  getMe, 
+  updateProfileFromPdf 
+} = require('../controllers/authController');
 
-// Wrap controller in try/catch or use express-async-handler
-// For simplicity, we are using the raw controller here, ensure you handle async errors in production
-const asyncHandler = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+// Configure Multer for temporary file storage
+const upload = multer({ dest: 'uploads/' });
 
-router.post('/register', asyncHandler(registerUser));
-router.post('/login', asyncHandler(loginUser));
+// Existing Authentication Routes
+router.post('/', registerUser);
+router.post('/login', loginUser);
+router.get('/me', protect, getMe);
+
+// New Route: Update Profile via PDF Upload
+// 'profilePdf' must match the key used in the frontend FormData
+router.put('/profile/upload-pdf', protect, upload.single('profilePdf'), updateProfileFromPdf);
 
 module.exports = router;
