@@ -18,7 +18,7 @@ app.use(helmet()); // Security Headers
 app.use(morgan('dev')); // Logging
 app.use(cors({
     origin: [
-        'https://thriving-kashata-36c146.netlify.app',
+        'https://anvorafinder.netlify.app',
         'http://localhost:5173'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
