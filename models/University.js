@@ -11,9 +11,11 @@ const universitySchema = mongoose.Schema({
   // Course Details
   courseName: { type: String, required: true },
   courseLevel: { type: String, required: true },
+  program: { type: String },
+  fieldOfStudy: { type: String },
   duration: String,
   tuitionFee: String,
-  intakes: String,
+  intakes: [String],
 
   // Admission Rules
   minCgpa: String,

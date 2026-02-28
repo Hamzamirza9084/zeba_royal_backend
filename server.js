@@ -27,10 +27,14 @@ app.use(cors({
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: false }));
 
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/authRoutes'))
-app.use('/api/universities', require('./routes/uniRoutes'));
+app.use('/api/universities', require('./routes/uniRoutes'))
+app.use('/api/applications', require('./routes/applicationRoutes'));
 
 // Error Handler (Must be last)
 app.use(errorHandler);

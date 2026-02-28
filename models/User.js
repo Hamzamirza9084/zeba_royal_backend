@@ -1,80 +1,82 @@
 const mongoose = require('mongoose');
 
-const schoolHistorySchema = new mongoose.Schema({
-  country: String,
-  name: String,
-  level: String,
-  gradingScheme: String,
-  language: String,
-  from: Date,
-  to: Date,
-  degree: String,
-  graduated: { type: Boolean, default: false },
-  graduationDate: Date,
-  certificateAvailable: { type: Boolean, default: false },
+const userSchema = mongoose.Schema({
+  // --- Auth Fields ---
+  name: { type: String, required: [true, 'Please add a name'] },
+  email: { type: String, required: [true, 'Please add an email'], unique: true },
+  password: { type: String, required: [true, 'Please add a password'] },
+  role: { type: String, enum: ['user', 'student', 'admin'], default: 'student' },
+  // NOTE: 'student' included to support legacy/explicit student accounts
+  // (keeps backward compatibility with frontend role checks)
+
+  // --- 2. Smart Document Vault ---
+  documents: [{
+    fileName: String,
+    fileUrl: String,
+    uploadDate: { type: Date, default: Date.now },
+    status: { type: String, enum: ['Pending', 'Received', 'Verified'], default: 'Received' }
+  }],
+
+  // --- 3. Personal Information ---
+  personalInfo: {
+    firstName: String,
+    middleName: String,
+    lastName: String,
+    dob: Date,
+    firstLanguage: String,
+    citizenship: String,
+    maritalStatus: { type: String, enum: ['Single', 'Married', 'Divorced', 'Widowed'] },
+    gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+    passport: {
+      number: String,
+      expiryDate: Date,
+      placeOfBirth: String
+    }
+  },
+
+  // --- 4. Address Section ---
   address: {
     street: String,
     city: String,
-    province: String,
-    zipCode: String
-  }
-});
-
-const userSchema = mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, default: 'student' },
-
-  // PERSONAL INFORMATION
-  firstName: String,
-  middleName: String,
-  lastName: String,
-  dob: Date,
-  firstLanguage: String,
-  citizenship: String,
-  passportNumber: String,
-  passportExpiry: Date,
-  passportPlaceOfBirth: String,
-  gender: String,
-  maritalStatus: String,
-  phone: String,
-  studentEmail: String,
-
-  // ADDRESS DETAILS
-  address: {
-    street: String, city: String, country: String, province: String, zipCode: String
+    country: String,
+    state: String,
+    zipCode: String,
+    phone: String,
+    phoneCountryCode: String
   },
 
-  // BACKGROUND
-  background: {
-    visaRefusal: { type: Boolean, default: false },
-    hasValidPermit: { type: Boolean, default: false },
-    permitDetails: String
-  },
+  // --- 5. Education Details (Repeater) ---
+  education: [{
+    country: String,
+    schoolName: String,
+    level: String, // e.g., High School, Bachelors
+    gradingScheme: String,
+    score: String,
+    scoreScale: String,
+    language: String,
+    attendedFrom: Date,
+    attendedTo: Date,
+    degreeName: String,
+    isGraduated: Boolean,
+    graduationDate: Date,
+    hasPhysicalCertificate: Boolean,
+    schoolAddress: {
+      street: String,
+      city: String,
+      state: String,
+      zipCode: String
+    }
+  }],
 
-  // EDUCATION (HIGHEST)
-  highestEducation: {
-    country: String, level: String, gradingScheme: String, gradeAverage: String, graduated: Boolean
-  },
-
-  // SCHOOL HISTORY (Multiple Entries)
-  schoolHistory: [schoolHistorySchema],
-
-  // TEST SCORES
+  // --- 6. Test Scores ---
   testScores: {
-    proofAvailable: Boolean,
-    conditionalAdmission: Boolean,
-    languageStatus: String,
-    greScore: String,
-    gmatScore: String,
-    openToLanguageCourse: Boolean
-  },
-
-  additionalDetails: {
-    emergencyContacts: String,
-    notes: String
+    englishProficiency: String, // e.g., "I have proof"
+    examType: String, // e.g., Duolingo, IELTS
+    examDate: Date,
+    overallScore: String
   }
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
 module.exports = mongoose.model('User', userSchema);
