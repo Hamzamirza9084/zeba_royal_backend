@@ -26,9 +26,12 @@ const universitySchema = mongoose.Schema({
   gapLimit: Number,
 
   // English Requirements
-  englishTests: String,
-  minScoreOverall: String,
-  minScoreSection: String,
+  englishRequirements: [{
+    testName: { type: String, enum: ['IELTS', 'PTE', 'TOEFL', 'DET'] },
+    minOverall: Number,
+    minSection: Number
+  }],
+  acceptsMOI: { type: String, enum: ['Yes', 'No'], default: 'No' },
 
   // Additional
   casPriority: String,

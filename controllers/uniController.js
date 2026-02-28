@@ -18,4 +18,63 @@ const setUniversity = async (req, res) => {
   res.status(200).json(university);
 };
 
-module.exports = { getUniversities, setUniversity };
+// @desc    Get single university
+// @route   GET /api/universities/:id
+const getUniversityById = async (req, res) => {
+  const university = await University.findById(req.params.id);
+
+  if (!university) {
+    res.status(404);
+    throw new Error('University not found');
+  }
+
+  res.status(200).json(university);
+};
+
+// @desc    Update university
+// @route   PUT /api/universities/:id
+const updateUniversity = async (req, res) => {
+  const university = await University.findById(req.params.id);
+
+  if (!university) {
+    res.status(404);
+    throw new Error('University not found');
+  }
+
+  // Optional: Check if the user is authorized to update this specific university
+  // if (university.createdBy.toString() !== req.user.id) {
+  //   res.status(401);
+  //   throw new Error('Not authorized to update this university');
+  // }
+
+  const updatedUniversity = await University.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true, runValidators: true } // Return the updated document & run schema validators
+  );
+
+  res.status(200).json(updatedUniversity);
+};
+
+// @desc    Delete university
+// @route   DELETE /api/universities/:id
+const deleteUniversity = async (req, res) => {
+  const university = await University.findById(req.params.id);
+
+  if (!university) {
+    res.status(404);
+    throw new Error('University not found');
+  }
+
+  await university.deleteOne();
+
+  res.status(200).json({ id: req.params.id, message: 'University deleted successfully' });
+};
+
+module.exports = {
+  getUniversities,
+  setUniversity,
+  getUniversityById,
+  updateUniversity,
+  deleteUniversity
+};
