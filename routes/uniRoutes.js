@@ -5,9 +5,14 @@ const {
     setUniversity,
     getUniversityById,
     updateUniversity,
-    deleteUniversity
+    deleteUniversity,
+    uploadLogo
 } = require('../controllers/uniController');
 const { protect, admin } = require('../middleware/authMiddleware');
+
+const multer = require('multer');
+const { storage } = require('../config/cloudinaryImage');
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
 
 const asyncHandler = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -16,6 +21,9 @@ router.get('/', asyncHandler(getUniversities));
 
 // Protected Admin route to add colleges
 router.post('/', protect, admin, asyncHandler(setUniversity));
+
+// Logo upload route
+router.post('/upload-logo', protect, admin, upload.single('logo'), asyncHandler(uploadLogo));
 
 // Single University Routes
 router.route('/:id')

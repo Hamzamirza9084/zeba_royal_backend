@@ -7,6 +7,7 @@ const universitySchema = mongoose.Schema({
   city: { type: String, required: true },
   ranking: String,
   website: String,
+  logo: String,
 
   // Course Details
   courseName: { type: String, required: true },
@@ -16,11 +17,10 @@ const universitySchema = mongoose.Schema({
   duration: String,
   tuitionFee: String,
   intakes: [String],
+  courseLink: String,
 
   // Admission Rules
   minCgpa: String,
-  acceptedDegrees: String,
-  acceptedBackgrounds: String,
   maxBacklogs: Number,
   gapAccepted: { type: String, enum: ['Yes', 'No'], default: 'No' },
   gapLimit: Number,

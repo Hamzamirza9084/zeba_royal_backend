@@ -71,10 +71,27 @@ const deleteUniversity = async (req, res) => {
   res.status(200).json({ id: req.params.id, message: 'University deleted successfully' });
 };
 
+// @desc    Upload an image file to be used as a university logo
+// @route   POST /api/universities/upload-logo
+// @access  Private/Admin
+const uploadLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file uploaded' });
+    }
+
+    // Cloudinary URL is returned in req.file.path
+    res.status(201).json({ url: req.file.path });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getUniversities,
   setUniversity,
   getUniversityById,
   updateUniversity,
-  deleteUniversity
+  deleteUniversity,
+  uploadLogo
 };

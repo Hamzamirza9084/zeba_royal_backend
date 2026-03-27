@@ -13,6 +13,7 @@ const userSchema = mongoose.Schema({
   documents: [{
     fileName: String,
     fileUrl: String,
+    cloudinaryId: String,
     uploadDate: { type: Date, default: Date.now },
     status: { type: String, enum: ['Pending', 'Received', 'Verified'], default: 'Received' }
   }],
@@ -31,7 +32,10 @@ const userSchema = mongoose.Schema({
       number: String,
       expiryDate: Date,
       placeOfBirth: String
-    }
+    },
+    guardianName: String,
+    guardianPhone: String,
+    guardianEmail: String
   },
 
   // --- 4. Address Section ---

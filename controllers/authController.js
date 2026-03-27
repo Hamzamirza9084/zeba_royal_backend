@@ -166,7 +166,7 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Upload a document and attach to user
+// @desc    Upload a document and attach to user (Cloudinary)
 // @route   POST /api/users/documents
 // @access  Private
 const uploadDocument = async (req, res) => {
@@ -178,10 +178,11 @@ const uploadDocument = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Build file record
+    // multer-storage-cloudinary places the Cloudinary URL in req.file.path
     const fileRecord = {
       fileName: req.file.originalname,
-      fileUrl: `/uploads/${req.file.filename}`,
+      fileUrl: req.file.path,          // Cloudinary URL
+      cloudinaryId: req.file.filename, // public_id for deletion
       status: 'Pending'
     };
 
@@ -194,7 +195,7 @@ const uploadDocument = async (req, res) => {
   }
 };
 
-// @desc    Delete a user's document and remove the file
+// @desc    Delete a user's document from Cloudinary
 // @route   DELETE /api/users/documents
 // @access  Private
 const deleteDocument = async (req, res) => {
@@ -206,24 +207,24 @@ const deleteDocument = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const existing = user.documents || [];
-    const updatedDocs = existing.filter(d => d.fileUrl !== fileUrl);
+    const docToDelete = existing.find(d => d.fileUrl === fileUrl);
 
-    if (updatedDocs.length === existing.length) {
+    if (!docToDelete) {
       return res.status(404).json({ message: 'Document not found' });
     }
 
-    user.documents = updatedDocs;
-    await user.save();
-
-    // Attempt to delete the file from disk
-    try {
-      const relPath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl; // remove leading slash
-      const filePath = path.join(__dirname, '..', relPath);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    } catch (fsErr) {
-      // Log but don't fail the request
-      console.error('Failed to delete file:', fsErr.message);
+    // Remove from Cloudinary if cloudinaryId exists
+    if (docToDelete.cloudinaryId) {
+      const { cloudinary } = require('../config/cloudinary');
+      try {
+        await cloudinary.uploader.destroy(docToDelete.cloudinaryId);
+      } catch (cloudErr) {
+        console.error('Cloudinary delete error:', cloudErr.message);
+      }
     }
+
+    user.documents = existing.filter(d => d.fileUrl !== fileUrl);
+    await user.save();
 
     res.status(200).json({ documents: user.documents });
   } catch (error) {
@@ -231,7 +232,7 @@ const deleteDocument = async (req, res) => {
   }
 };
 
-// @desc    Serve a user's document with correct headers (inline view)
+// @desc    View a user's document (redirect to Cloudinary URL)
 // @route   GET /api/users/documents/view/:filename
 // @access  Private
 const viewDocument = async (req, res) => {
@@ -242,17 +243,11 @@ const viewDocument = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const doc = (user.documents || []).find(d => d.fileUrl && d.fileUrl.endsWith(filename));
+    const doc = (user.documents || []).find(d => d.fileUrl && d.fileUrl.includes(filename));
     if (!doc) return res.status(404).json({ message: 'Document not found' });
 
-    const relPath = path.join('uploads', filename);
-    const filePath = path.join(__dirname, '..', relPath);
-    if (!fs.existsSync(filePath)) return res.status(404).json({ message: 'File not found' });
-
-    res.setHeader('Content-Type', 'application/pdf');
-    // Tell browser to display inline and suggest original filename when saving
-    res.setHeader('Content-Disposition', `inline; filename="${doc.fileName.replace(/"/g, '')}"`);
-    res.sendFile(filePath);
+    // Redirect to the Cloudinary URL so the browser can view / download it
+    res.redirect(doc.fileUrl);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
