@@ -19,6 +19,7 @@ app.use(morgan('dev')); // Logging
 app.use(cors({
     origin: [
         'https://anvorafinder.netlify.app',
+        'https://anvora.in',
         'http://localhost:5173'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
