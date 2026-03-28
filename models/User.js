@@ -78,7 +78,10 @@ const userSchema = mongoose.Schema({
     examType: String, // e.g., Duolingo, IELTS
     examDate: Date,
     overallScore: String
-  }
+  },
+
+  // --- 7. Saved Items ---
+  savedColleges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'University' }]
 }, {
   timestamps: true
 });

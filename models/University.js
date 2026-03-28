@@ -24,6 +24,8 @@ const universitySchema = mongoose.Schema({
   maxBacklogs: Number,
   gapAccepted: { type: String, enum: ['Yes', 'No'], default: 'No' },
   gapLimit: Number,
+  appFee: { type: String, default: 'Free Waiver' },
+  successChance: { type: String, default: 'High' },
 
   // English Requirements
   englishRequirements: [{

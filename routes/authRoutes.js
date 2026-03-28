@@ -43,4 +43,8 @@ router.get('/documents/view/:filename', protect, require('../controllers/authCon
 router.get('/students', protect, admin, getStudents);
 router.get('/students/:id', protect, admin, getStudentById);
 
+// Saved Colleges
+router.get('/saved-colleges', protect, require('../controllers/authController').getSavedColleges);
+router.post('/saved-colleges/:id', protect, require('../controllers/authController').toggleSavedCollege);
+
 module.exports = router;

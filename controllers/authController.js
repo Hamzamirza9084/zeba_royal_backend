@@ -281,6 +281,53 @@ const getStudentById = async (req, res) => {
   }
 };
 
+// @desc    Get user's saved colleges
+// @route   GET /api/users/saved-colleges
+// @access  Private
+const getSavedColleges = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(user.savedColleges || []);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Toggle a college in user's saved array
+// @route   POST /api/users/saved-colleges/:id
+// @access  Private
+const toggleSavedCollege = async (req, res) => {
+  try {
+    const collegeId = req.params.id;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const savedColleges = user.savedColleges || [];
+    const index = savedColleges.indexOf(collegeId);
+
+    if (index > -1) {
+      // Remove it
+      savedColleges.splice(index, 1);
+    } else {
+      // Add it
+      savedColleges.push(collegeId);
+    }
+
+    user.savedColleges = savedColleges;
+    await user.save();
+
+    res.status(200).json(user.savedColleges);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -291,4 +338,6 @@ module.exports = {
   viewDocument,
   getStudents,
   getStudentById,
+  getSavedColleges,
+  toggleSavedCollege,
 };
