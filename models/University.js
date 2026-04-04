@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
 
 const universitySchema = mongoose.Schema({
-  // University Info
-  name: { type: String, required: true },
-  country: { type: String, required: true },
-  city: { type: String, required: true },
+  // Normalized Institution Info
+  institutionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institution' },
+
+  // Legacy University Info (Kept for backward compatibility)
+  name: { type: String },
+  country: { type: String },
+  city: { type: String },
   ranking: String,
   website: String,
   logo: String,

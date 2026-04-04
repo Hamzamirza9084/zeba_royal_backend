@@ -3,7 +3,13 @@ const University = require('../models/University');
 // @desc    Get all universities
 // @route   GET /api/universities
 const getUniversities = async (req, res) => {
-  const universities = await University.find();
+  const universities = await University.find()
+    .populate({
+      path: 'institutionId',
+      populate: {
+        path: 'destinationId'
+      }
+    });
   res.status(200).json(universities);
 };
 
@@ -21,7 +27,13 @@ const setUniversity = async (req, res) => {
 // @desc    Get single university
 // @route   GET /api/universities/:id
 const getUniversityById = async (req, res) => {
-  const university = await University.findById(req.params.id);
+  const university = await University.findById(req.params.id)
+    .populate({
+      path: 'institutionId',
+      populate: {
+        path: 'destinationId'
+      }
+    });
 
   if (!university) {
     res.status(404);

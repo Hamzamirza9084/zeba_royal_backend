@@ -40,4 +40,22 @@ router.post('/', protect, admin, async (req, res) => {
   }
 });
 
+// @desc    Toggle destination enabled status
+// @route   PUT /api/destinations/:id/toggle
+// @access  Private/Admin
+router.put('/:id/toggle', protect, admin, async (req, res) => {
+  try {
+    const destination = await Destination.findById(req.params.id);
+    if (!destination) {
+      return res.status(404).json({ message: 'Destination not found' });
+    }
+    destination.enabled = !destination.enabled;
+    await destination.save();
+    res.json(destination);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
 module.exports = router;

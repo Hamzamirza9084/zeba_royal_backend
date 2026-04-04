@@ -37,6 +37,7 @@ app.use('/api/users', require('./routes/authRoutes'));
 app.use('/api/universities', require('./routes/uniRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
 app.use('/api/destinations', require('./routes/destinationRoutes'));
+app.use('/api/institutions', require('./routes/institutionRoutes'));
 
 // Error Handler (Must be last)
 app.use(errorHandler);
