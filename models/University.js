@@ -5,9 +5,9 @@ const universitySchema = mongoose.Schema({
   institutionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Institution' },
 
   // Legacy University Info (Kept for backward compatibility)
-  name: { type: String },
-  country: { type: String },
-  city: { type: String },
+  name: { type: String, trim: true },
+  country: { type: String, trim: true },
+  city: { type: String, trim: true },
   ranking: String,
   website: String,
   logo: String,

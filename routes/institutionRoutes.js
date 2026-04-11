@@ -31,7 +31,18 @@ router.post('/', protect, admin, async (req, res) => {
       return res.status(400).json({ message: 'Institution name and destinationId are required' });
     }
 
-    const institutionExists = await Institution.findOne({ name, destinationId, city });
+    const trimmedName = name.trim();
+    const trimmedCity = (city || '').trim();
+    const escName = trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const query = { 
+      name: { $regex: new RegExp(`^${escName}$`, 'i') },
+      destinationId 
+    };
+    if (trimmedCity) {
+      const escCity = trimmedCity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.city = { $regex: new RegExp(`^${escCity}$`, 'i') };
+    }
+    const institutionExists = await Institution.findOne(query);
     if (institutionExists) {
       return res.status(400).json({ message: 'Institution already exists in this destination and city' });
     }

@@ -27,7 +27,11 @@ router.post('/', protect, admin, async (req, res) => {
       return res.status(400).json({ message: 'Destination name is required' });
     }
 
-    const destinationExists = await Destination.findOne({ name });
+    const trimmedName = name.trim();
+    const escName = trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const destinationExists = await Destination.findOne({ 
+      name: { $regex: new RegExp(`^${escName}$`, 'i') } 
+    });
     if (destinationExists) {
       return res.status(400).json({ message: 'Destination already exists' });
     }
