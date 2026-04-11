@@ -31,9 +31,9 @@ router.post('/', protect, admin, async (req, res) => {
       return res.status(400).json({ message: 'Institution name and destinationId are required' });
     }
 
-    const institutionExists = await Institution.findOne({ name, destinationId });
+    const institutionExists = await Institution.findOne({ name, destinationId, city });
     if (institutionExists) {
-      return res.status(400).json({ message: 'Institution already exists in this destination' });
+      return res.status(400).json({ message: 'Institution already exists in this destination and city' });
     }
 
     const institution = await Institution.create({
