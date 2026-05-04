@@ -31,6 +31,15 @@ app.use(express.urlencoded({ extended: false }));
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
 
+// Health check / root route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Zeba Royal Backend is running 🚀",
+    status: "OK",
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/authRoutes'));
