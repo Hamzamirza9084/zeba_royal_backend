@@ -17,14 +17,15 @@ const generateToken = (id) => {
 // @access  Public
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
 
     if (!name || !email || !password) {
       res.status(400);
       throw new Error('Please add all fields');
     }
 
-    // Check if user exists
+    // Check if user exists (case-insensitive, trimmed)
     const userExists = await User.findOne({ email });
 
     if (userExists) {
@@ -65,9 +66,10 @@ const registerUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
+    const { password } = req.body;
 
-    // Check for user email
+    // Check for user email (case-insensitive, trimmed)
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
