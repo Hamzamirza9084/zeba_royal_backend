@@ -20,6 +20,7 @@ app.use(cors({
     origin: [
         'https://anvorafinder.netlify.app',
         'https://anvora.in',
+        'https://www.anvora.in',
         'http://localhost:5173'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
