@@ -6,6 +6,7 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const compression = require('compression');
 
 const port = process.env.PORT || 5000;
 
@@ -15,6 +16,7 @@ const app = express();
 
 // --- Extra Goodies ---
 app.use(helmet()); // Security Headers
+app.use(compression()); // Gzip compression — reduces payload by 70-80%
 app.use(morgan('dev')); // Logging
 app.use(cors({
     origin: [

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
     getUniversities,
+    getUniversitiesMeta,
     setUniversity,
     getUniversityById,
     updateUniversity,
@@ -21,6 +22,9 @@ router.get('/', asyncHandler(getUniversities));
 
 // Protected Admin route to add colleges
 router.post('/', protect, admin, asyncHandler(setUniversity));
+
+// Lightweight metadata for filter dropdowns (must be before /:id)
+router.get('/meta', asyncHandler(getUniversitiesMeta));
 
 // Logo upload route
 router.post('/upload-logo', protect, admin, upload.single('logo'), asyncHandler(uploadLogo));

@@ -11,4 +11,9 @@ const institutionSchema = mongoose.Schema({
   enabled: { type: Boolean, default: true }
 }, { timestamps: true });
 
+// Indexes for fast lookups
+institutionSchema.index({ destinationId: 1 });
+institutionSchema.index({ name: 1 });
+institutionSchema.index({ destinationId: 1, name: 1 });
+
 module.exports = mongoose.model('Institution', institutionSchema);

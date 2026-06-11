@@ -47,4 +47,11 @@ const universitySchema = mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
+// Indexes for fast queries
+universitySchema.index({ institutionId: 1 });
+universitySchema.index({ courseLevel: 1 });
+universitySchema.index({ fieldOfStudy: 1 });
+universitySchema.index({ courseName: 'text', fieldOfStudy: 'text' });
+universitySchema.index({ institutionId: 1, courseLevel: 1, fieldOfStudy: 1 });
+
 module.exports = mongoose.model('University', universitySchema);
