@@ -12,6 +12,14 @@ const getUniversities = async (req, res) => {
   // Build DB filter object from query params for first-level filtering
   const dbFilter = {};
 
+  // Filter by specific IDs
+  if (req.query.ids) {
+    const ids = req.query.ids.split(',').filter(Boolean);
+    if (ids.length > 0) {
+      dbFilter._id = { $in: ids };
+    }
+  }
+
   // Filter by course level
   if (req.query.courseLevel) {
     dbFilter.courseLevel = { $regex: req.query.courseLevel, $options: 'i' };
