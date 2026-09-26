@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Destination = require('../models/Destination');
+const Institution = require('../models/Institution');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 // @desc    Get all destinations
@@ -8,10 +9,24 @@ const { protect, admin } = require('../middleware/authMiddleware');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const destinations = await Destination.find({}).sort({ name: 1 });
+    const destinations = await Destination.find({}).sort({ name: 1 }).lean();
+
+    if (req.query.withCounts === 'true') {
+      const counts = await Institution.aggregate([
+        { $group: { _id: '$destinationId', count: { $sum: 1 } } }
+      ]);
+      const countMap = {};
+      counts.forEach(c => {
+        if (c._id) countMap[c._id.toString()] = c.count;
+      });
+      destinations.forEach(d => {
+        d.institutionCount = countMap[d._id.toString()] || 0;
+      });
+    }
+
     res.json(destinations);
   } catch (error) {
-    console.error(error);
+    console.error('getDestinations error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 });
@@ -27,19 +42,19 @@ router.post('/', protect, admin, async (req, res) => {
       return res.status(400).json({ message: 'Destination name is required' });
     }
 
-    const trimmedName = name.trim();
+    const trimmedName = name.trim().replace(/\s+/g, ' ');
     const escName = trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const destinationExists = await Destination.findOne({ 
       name: { $regex: new RegExp(`^${escName}$`, 'i') } 
     });
     if (destinationExists) {
-      return res.status(400).json({ message: 'Destination already exists' });
+      return res.status(400).json({ message: `"${trimmedName}" is already there!` });
     }
 
-    const destination = await Destination.create({ name });
+    const destination = await Destination.create({ name: trimmedName });
     res.status(201).json(destination);
   } catch (error) {
-    console.error(error);
+    console.error('addDestination error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 });
@@ -57,7 +72,32 @@ router.put('/:id/toggle', protect, admin, async (req, res) => {
     await destination.save();
     res.json(destination);
   } catch (error) {
-    console.error(error);
+    console.error('toggleDestination error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// @desc    Delete a destination
+// @route   DELETE /api/destinations/:id
+// @access  Private/Admin
+router.delete('/:id', protect, admin, async (req, res) => {
+  try {
+    const destination = await Destination.findById(req.params.id);
+    if (!destination) {
+      return res.status(404).json({ message: 'Destination not found' });
+    }
+
+    const instCount = await Institution.countDocuments({ destinationId: req.params.id });
+    if (instCount > 0 && req.query.force !== 'true') {
+      return res.status(400).json({ 
+        message: `Cannot delete: ${instCount} institution(s) belong to ${destination.name}. Please remove or reassign them first.` 
+      });
+    }
+
+    await destination.deleteOne();
+    res.json({ message: 'Destination deleted successfully', id: req.params.id });
+  } catch (error) {
+    console.error('deleteDestination error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 });

@@ -82,6 +82,7 @@ const getUniversities = async (req, res) => {
     for (const uni of universities) {
       const inst = uni.institutionId ? instMap.get(uni.institutionId.toString()) : null;
       uni.institutionId = inst;
+      uni.currency = uni.currency || '$';
 
       // Filter by Destination
       if (req.query.destination && req.query.destination !== 'All Destinations') {
@@ -289,9 +290,25 @@ const getUniversitiesMeta = async (req, res) => {
 // @desc    Set university
 // @route   POST /api/universities
 const setUniversity = async (req, res) => {
+  // Check if this exact program already exists for this institution
+  if (req.body.courseName && req.body.institutionId && req.body.courseLevel) {
+    const escCourse = req.body.courseName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const existingUni = await University.findOne({
+      institutionId: req.body.institutionId,
+      courseLevel: req.body.courseLevel,
+      courseName: { $regex: new RegExp(`^${escCourse}$`, 'i') }
+    });
+    if (existingUni) {
+      return res.status(400).json({ 
+        message: `This program ("${req.body.courseName}" - ${req.body.courseLevel}) is already there for this institution!` 
+      });
+    }
+  }
+
   // We assume the body contains all the fields from AdminAddUniversity.jsx
   const university = await University.create({
     ...req.body,
+    currency: req.body.currency || '$',
     createdBy: req.user.id
   });
   res.status(200).json(university);
@@ -313,7 +330,10 @@ const getUniversityById = async (req, res) => {
     throw new Error('University not found');
   }
 
-  res.status(200).json(university);
+  const uniObj = university.toObject ? university.toObject() : university;
+  uniObj.currency = uniObj.currency || '$';
+
+  res.status(200).json(uniObj);
 };
 
 // @desc    Update university
@@ -328,7 +348,10 @@ const updateUniversity = async (req, res) => {
 
   const updatedUniversity = await University.findByIdAndUpdate(
     req.params.id,
-    req.body,
+    {
+      ...req.body,
+      currency: req.body.currency || '$'
+    },
     { new: true, runValidators: true } // Return the updated document & run schema validators
   );
 

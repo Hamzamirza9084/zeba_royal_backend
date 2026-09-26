@@ -19,6 +19,7 @@ const universitySchema = mongoose.Schema({
   fieldOfStudy: { type: String },
   duration: String,
   tuitionFee: String,
+  currency: { type: String, default: '$' },
   intakes: [String],
   courseLink: String,
 
