@@ -290,6 +290,41 @@ const getUniversitiesMeta = async (req, res) => {
 // @desc    Set university
 // @route   POST /api/universities
 const setUniversity = async (req, res) => {
+  // If institutionId is not provided, auto-resolve by name or create institution
+  if (!req.body.institutionId && req.body.name) {
+    const trimmedName = req.body.name.trim();
+    const escName = trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // 1. Try finding existing institution by name (case-insensitive)
+    let inst = await Institution.findOne({
+      name: { $regex: new RegExp(`^${escName}$`, 'i') }
+    });
+
+    // 2. If not found and country provided, ensure destination exists and create institution
+    if (!inst && req.body.country) {
+      const escCountry = req.body.country.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let dest = await Destination.findOne({
+        name: { $regex: new RegExp(`^${escCountry}$`, 'i') }
+      });
+      if (!dest) {
+        dest = await Destination.create({ name: req.body.country.trim() });
+      }
+
+      inst = await Institution.create({
+        name: trimmedName,
+        destinationId: dest._id,
+        city: (req.body.city || '').trim(),
+        ranking: req.body.ranking || '',
+        website: req.body.website || '',
+        logo: req.body.logo || ''
+      });
+    }
+
+    if (inst) {
+      req.body.institutionId = inst._id;
+    }
+  }
+
   // Check if this exact program already exists for this institution
   if (req.body.courseName && req.body.institutionId && req.body.courseLevel) {
     const escCourse = req.body.courseName.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
